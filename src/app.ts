@@ -1,5 +1,5 @@
 import dotenv from 'dotenv';
-import express, { Request, Response } from 'express';
+import express, { NextFunction, Request, Response } from 'express';
 import mongoose from 'mongoose';
 import rateLimit from 'express-rate-limit';
 import { errors } from 'celebrate';
@@ -9,7 +9,8 @@ import cardRouter from './routes/cardRoutes';
 import { requestLogger, errorLogger } from './middlewares/logger';
 import errorHandler from './middlewares/errorHandler';
 import { validateSignin, validateSignup } from './middlewares/validators';
-import { STATUS_CODES, MESSAGES } from './utils/constants';
+import { MESSAGES } from './utils/constants';
+import NotFoundError from './errors/NotFoundError';
 
 dotenv.config();
 
@@ -37,10 +38,8 @@ app.post('/signup', validateSignup, createUser);
 app.use('/users', userRouter);
 app.use('/cards', cardRouter);
 
-app.use('*', (req: Request, res: Response) => {
-  res
-    .status(STATUS_CODES.NOT_FOUND)
-    .send({ message: MESSAGES.ROUTE_NOT_FOUND });
+app.use('*', (req: Request, res: Response, next: NextFunction) => {
+  next(new NotFoundError(MESSAGES.ROUTE_NOT_FOUND));
 });
 
 app.use(errorLogger);

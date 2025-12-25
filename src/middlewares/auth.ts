@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { MESSAGES, STATUS_CODES } from '../utils/constants';
+import { MESSAGES } from '../utils/constants';
+import UnauthorizedError from '../errors/UnauthorizedError';
 
 interface IPayload {
   _id: string;
@@ -12,9 +13,7 @@ const auth = (req: Request, res: Response, next: NextFunction) => {
   const { authorization } = req.headers;
 
   if (!authorization || !authorization.startsWith('Bearer ')) {
-    return res
-      .status(STATUS_CODES.UNAUTHORIZED)
-      .send({ message: MESSAGES.AUTH_REQUIRED });
+    return next(new UnauthorizedError(MESSAGES.AUTH_REQUIRED));
   }
 
   const token = authorization.replace('Bearer ', '');
@@ -23,9 +22,7 @@ const auth = (req: Request, res: Response, next: NextFunction) => {
     req.user = jwt.verify(token, JWT_SECRET) as IPayload;
     return next();
   } catch (err) {
-    return res
-      .status(STATUS_CODES.UNAUTHORIZED)
-      .send({ message: MESSAGES.UNAUTHORIZED });
+    return next(new UnauthorizedError(MESSAGES.UNAUTHORIZED));
   }
 };
 
